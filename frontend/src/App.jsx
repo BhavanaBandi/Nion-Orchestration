@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
+import Login from './Login';
 
 // Sample test messages from testio.md
 const SAMPLE_MESSAGES = [
@@ -55,6 +56,19 @@ const SAMPLE_MESSAGES = [
 ];
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  // Auth State Management
+  const handleLogin = (newToken) => {
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
+
+  // Main App State
   const [messageContent, setMessageContent] = useState('');
   const [senderName, setSenderName] = useState('');
   const [senderRole, setSenderRole] = useState('');
@@ -63,6 +77,11 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orchestrationMap, setOrchestrationMap] = useState('');
   const [error, setError] = useState('');
+
+  // If not logged in, show Login screen
+  if (!token) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   const loadSample = (sample) => {
     setMessageContent(sample.content);
@@ -85,10 +104,12 @@ function App() {
     setOrchestrationMap('');
 
     try {
-      const response = await fetch('http://localhost:8000/orchestrate', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/orchestrate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Include Token
         },
         body: JSON.stringify({
           message_id: `MSG-${Date.now()}`,
@@ -102,6 +123,11 @@ function App() {
         })
       });
 
+      if (response.status === 401) {
+        handleLogout(); // Auto logout on invalid token
+        throw new Error("Session expired. Please login again.");
+      }
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
@@ -110,69 +136,12 @@ function App() {
       setOrchestrationMap(data.orchestration_map);
     } catch (err) {
       // For demo mode without backend, show a sample output
-      setOrchestrationMap(`==========================================================================
-NION ORCHESTRATION MAP
-==========================================================================
-Message: MSG-DEMO
-From: ${senderName || 'Unknown'} (${senderRole || 'Unknown'})
-Project: ${project || 'Not specified'}
-
-==========================================================================
-L1 PLAN
-==========================================================================
-[TASK-001] → L2:TRACKING_EXECUTION
-Purpose: Extract action items from message
-
-[TASK-002] → L2:TRACKING_EXECUTION
-Purpose: Extract risks and blockers
-
-[TASK-003] → L3:knowledge_retrieval (Cross-Cutting)
-Purpose: Retrieve project context
-
-[TASK-004] → L2:COMMUNICATION_COLLABORATION
-Purpose: Formulate gap-aware response
-Depends On: TASK-001, TASK-002, TASK-003
-
-==========================================================================
-L2/L3 EXECUTION
-==========================================================================
-
-[TASK-001] L2:TRACKING_EXECUTION
-└─▶ [TASK-001-A] L3:action_item_extraction
-Status: COMPLETED
-Output:
-• AI-001: "Extracted action items from message"
-  Owner: ? | Due: ? [MISSING_OWNER, MISSING_DUE_DATE]
-
-[TASK-002] L3:risk_extraction (Cross-Cutting)
-Status: COMPLETED
-Output:
-• RISK-001: "Timeline constraints identified"
-  Likelihood: MEDIUM | Impact: HIGH
-
-[TASK-003] L3:knowledge_retrieval (Cross-Cutting)
-Status: COMPLETED
-Output:
-• Project: ${project || 'PRJ-DEMO'}
-• Status: In Progress
-• Team Capacity: 85% utilized
-
-[TASK-004] L2:COMMUNICATION_COLLABORATION
-└─▶ [TASK-004-A] L3:qna
-Status: COMPLETED
-Output:
-• Response: "Analysis complete. See extracted items above."
-
-WHAT I KNOW:
-• Message received from ${senderName || 'Unknown'}
-• Project context retrieved
-
-WHAT I NEED:
-• Additional details for complete analysis
-
-==========================================================================
-
-⚠️ Note: This is a demo output. For live processing, ensure the backend API is running at http://localhost:8000`);
+      if (!import.meta.env.VITE_API_URL && err.message.includes("Failed to fetch")) {
+        // Fallback code removed for brevity, keeping error handling clean
+        setError(`Connection Error: ${err.message}. Ensure backend is running.`);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -196,12 +165,19 @@ WHAT I NEED:
           <div className="logo">
             <span className="logo-icon">⚡</span>
             Nion Orchestration
-            <span className="version-badge">v0.2.0</span>
+            <span className="version-badge">v0.3.0</span>
           </div>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
             <span className="status-badge status-success">
-              ● openai/gpt-oss-120b
+              ● Protected
             </span>
+            <button
+              onClick={handleLogout}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>
@@ -368,7 +344,7 @@ WHAT I NEED:
       {/* Footer */}
       <footer className="footer">
         <div className="container">
-          Nion Orchestration Engine • Python + SQLite + Groq LLaMA 3 70B
+          Nion Orchestration Engine • Python + SQLite + OpenAI/GPT-OSS-120
         </div>
       </footer>
     </div>

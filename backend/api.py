@@ -32,13 +32,31 @@ app = FastAPI(
 )
 
 # Add CORS middleware for frontend
+# Add CORS middleware for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Authentication logic
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, status
+import auth
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    user = auth.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 # Request/Response Models
@@ -74,11 +92,27 @@ async def root():
     }
 
 
+@app.post("/token", response_model=auth.Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user_ok = auth.verify_password(form_data.password, auth.ADMIN_PASSWORD_HASH)
+    if not user_ok or form_data.username != auth.ADMIN_USER:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = auth.create_access_token(data={"sub": form_data.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
 @app.post("/orchestrate", response_model=OrchestrationResponse)
-async def orchestrate(request: OrchestrationRequest):
+async def orchestrate(
+    request: OrchestrationRequest,
+    current_user: str = Depends(get_current_user)
+):
     """
     Main orchestration endpoint.
-    
+    Protected by JWT Authentication.
     Processes a message through the L1→L2→L3 pipeline.
     """
     message_id = request.message_id or f"MSG-{int(datetime.now().timestamp())}"
