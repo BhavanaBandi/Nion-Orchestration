@@ -48,6 +48,8 @@ Instead of a generic view for everyone, the dashboard adapts to the user's role:
 *   **Contextual Q&A**: Ask questions about the project and get answers based on documentation.
 *   **Status**: 🚧 **Under Construction**. The chatbot handles basic queries but improvements to context retrieval and answer generation are ongoing.
 *   **Tech**: FAISS Vector Store + Sentence Transformers + Groq LLaMA 3.
+<img width="522" height="321" alt="image" src="https://github.com/user-attachments/assets/4d0fb176-ec3f-4a9b-9f6f-208671ea3fc2" />
+
 
 ## 📁 Project Structure
 
