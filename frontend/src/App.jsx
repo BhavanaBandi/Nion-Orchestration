@@ -141,6 +141,10 @@ function App() {
         throw new Error("Session expired. Please login again.");
       }
 
+      if (response.status === 429) {
+        throw new Error("⚠️ Service is busy (Rate Limit). Please wait a few minutes.");
+      }
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
@@ -260,7 +264,7 @@ function App() {
               <div className="card">
                 <div className="card-header">
                   <div>
-                    <h2 className="card-title">📩 Message Input</h2>
+                    <h2 className="card-title">Message Input</h2>
                     <p className="card-subtitle">
                       {activeProject ? `Orchestrating for ${activeProject.project_name}` : "Enter a message or select a project"}
                     </p>
@@ -366,7 +370,7 @@ function App() {
                         Processing...
                       </>
                     ) : (
-                      <>🚀 Process Message</>
+                      <>Process Message</>
                     )}
                   </button>
                   <button
@@ -384,7 +388,7 @@ function App() {
                 <div className="card-header">
                   <div>
                     <h2 className="card-title">
-                      {customerData ? "📊 Request Status" : dashboardData ? "🛠️ Action Dashboard" : "🗺️ Orchestration Map"}
+                      {customerData ? "Request Status" : dashboardData ? "🛠️ Action Dashboard" : "Orchestration Map"}
                     </h2>
                     <p className="card-subtitle">
                       {customerData ? "Summary of your processed request" : dashboardData ? "Unified view of risks, actions, and decisions" : "Generated task plan and extractions"}
@@ -427,7 +431,7 @@ function App() {
                     </div>
 
                     <div style={{ marginTop: '2rem', textAlign: 'center', opacity: 0.6, fontSize: '0.8rem' }}>
-                      <p>🔒 Detailed technical logs are restricted for Customer accounts.</p>
+                      <p>Detailed technical logs are restricted for Customer accounts.</p>
                     </div>
                   </div>
                 ) : dashboardData ? (
@@ -466,7 +470,7 @@ function App() {
                     {dashboardData.action_items && dashboardData.action_items.length > 0 && (
                       <div style={{ marginBottom: '2rem' }}>
                         <h3 style={{ color: '#38bdf8', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          ✅ Action Items
+                          Action Items
                           <span className="status-badge" style={{ fontSize: '0.7rem', backgroundColor: 'var(--accent-primary)' }}>{dashboardData.action_items.length}</span>
                         </h3>
                         <div className="data-list" style={{ display: 'grid', gap: '10px' }}>
@@ -487,7 +491,7 @@ function App() {
                                     👤 {item.owner && item.owner !== "?" ? item.owner : "Unassigned"}
                                   </span>
                                   {item.deadline && item.deadline !== "?" && (
-                                    <span title="Deadline">🕒 {item.deadline}</span>
+                                    <span title="Deadline"> {item.deadline}</span>
                                   )}
                                 </div>
                               </div>
@@ -503,7 +507,7 @@ function App() {
                     {/* Decisions */}
                     {dashboardData.decisions && dashboardData.decisions.length > 0 && (
                       <div style={{ marginBottom: '2rem' }}>
-                        <h3 style={{ color: '#a855f7', marginBottom: '0.8rem' }}>🧠 Strategic Decisions</h3>
+                        <h3 style={{ color: '#a855f7', marginBottom: '0.8rem' }}> Strategic Decisions</h3>
                         <div style={{
                           display: 'grid',
                           gap: '10px',
