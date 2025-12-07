@@ -1,9 +1,7 @@
 # Nion Orchestration Engine
 
 L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
-
-<img width="1874" height="849" alt="image" src="https://github.com/user-attachments/assets/2a4ed4e9-c84a-4b81-b54b-fa30a430c950" />
-
+<img width="1903" height="925" alt="image" src="https://github.com/user-attachments/assets/e748f0ee-0a1d-4d64-af0c-f73cf7607301" />
 
 
 ## 🔐 Authentication (Feature Branch)
