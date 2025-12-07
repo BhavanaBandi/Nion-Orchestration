@@ -23,15 +23,35 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 SAMPLES_DIR.mkdir(exist_ok=True)
 
 
-class GroqConfig(BaseModel):
-    """Configuration for Groq API (LLaMA 3 70B)"""
-    api_key: str = Field(
-        default_factory=lambda: os.getenv("GROQ_API_KEY", "")
+class LLMConfig(BaseModel):
+    """Configuration for LLM Provider (Gemini, Groq, or OpenAI)"""
+    provider: str = Field(
+        default_factory=lambda: os.getenv("LLM_PROVIDER", "gemini")
     )
-    base_url: str = "https://api.groq.com/openai/v1"
-    model: str = "llama-3.3-70b-versatile"
+    api_key: str = Field(default="")
+    base_url: str = Field(default="")
+    model: str = Field(default="")
     timeout: float = 60.0
     max_retries: int = 3
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        
+        # Auto-configure based on provider if not explicitly set
+        if self.provider == "openai":
+            self.api_key = self.api_key or os.getenv("OPENAI_API_KEY", "")
+            self.base_url = self.base_url or "https://api.openai.com/v1"
+            self.model = self.model or "gpt-4o"
+        elif self.provider == "gemini":
+            self.api_key = self.api_key or os.getenv("GEMINI_API_KEY", "")
+            # Gemini SDK doesn't use base_url in the same way, but we keep it for consistency or custom endpoints
+            self.base_url = self.base_url or "" 
+            self.model = self.model or "gemini-2.5-flash"
+        else:
+            # Default to Groq
+            self.api_key = self.api_key or os.getenv("GROQ_API_KEY", "")
+            self.base_url = self.base_url or "https://api.groq.com/openai/v1"
+            self.model = self.model or "llama-3.3-70b-versatile"
 
 
 class StorageConfig(BaseModel):
@@ -41,7 +61,7 @@ class StorageConfig(BaseModel):
 
 class Config(BaseModel):
     """Main application configuration"""
-    llm: GroqConfig = Field(default_factory=GroqConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     output_dir: Path = OUTPUT_DIR
     samples_dir: Path = SAMPLES_DIR

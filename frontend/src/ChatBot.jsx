@@ -21,6 +21,9 @@ function ChatBot({ token, onClose }) {
                 },
                 body: JSON.stringify({ question, top_k: 3 }),
             });
+            if (response.status === 429) {
+                throw new Error("⚠️ Service is busy (Rate Limit). Please wait a few minutes.");
+            }
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.detail || 'Chat request failed');

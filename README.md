@@ -72,19 +72,37 @@ Nion-Orchestration/
 
 ## 🛠️ Setup & Usage
 
-### 1. Backend
+### 1. Backend Setup
 ```bash
 cd backend
+# Create virtual environment (recommended)
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-# Set GROQ_API_KEY
-python api.py
+
+# Environment Variables
+# Create a .env file in /backend with:
+# GROQ_API_KEY=your_api_key_here
 ```
 
-### 2. Frontend
+### 2. Run Application
+**Terminal 1 (Backend):**
+```bash
+python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
+# Server runs at http://localhost:8000
+```
+
+**Terminal 2 (Frontend):**
 ```bash
 cd frontend
 npm install
 npm run dev
+# App runs at http://localhost:5173
 ```
 
 ### 3. Using the App
@@ -93,8 +111,11 @@ npm run dev
 3.  **Process Message**: Enter a request. The system will orchestrate it within the context of your project.
 4.  **Explore Views**: Log out and log in as `engineer_bob` or `customer_dave` to see how the dashboard changes!
 
-## 📋 Test Cases
-The system is verified against 7 core scenarios (`testio.md`) covering feature requests, status checks, and ambiguity resolution.
+## 📋 Test Cases & Sample Outputs
+The system is verified against 7 core scenarios covering feature requests, status checks, and ambiguity resolution.
+Sample outputs (JSON Task Plans & Orchestration Maps) are generated in the `backend/samples/` directory.
+
+See `testio.md` for the full list of test scenarios.
 
 ## 📄 License
 MIT

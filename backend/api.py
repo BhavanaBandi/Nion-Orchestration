@@ -222,9 +222,17 @@ async def orchestrate(
         l1_result = await l1_orchestrator.plan_tasks_from_dict(message_dict)
         
         if not l1_result.success:
+            error_msg = str(l1_result.error)
+            status_code = 500
+            
+            # Check for Rate Limit errors
+            if "429" in error_msg or "Rate limit" in error_msg or "rate_limit_exceeded" in error_msg:
+                status_code = 429
+                error_msg = "AI Service Rate Limit Reached. Please wait a few minutes and try again."
+            
             raise HTTPException(
-                status_code=500,
-                detail=f"L1 planning failed: {l1_result.error}"
+                status_code=status_code,
+                detail=error_msg
             )
         
         task_plan = l1_result.task_plan

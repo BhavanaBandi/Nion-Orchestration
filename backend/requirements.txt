@@ -9,6 +9,7 @@ python-dotenv>=1.0.0
 # LLM Client
 httpx>=0.24.0
 tenacity>=8.2.0
+google-genai>=1.0.0
 
 # API Server
 fastapi>=0.104.0
