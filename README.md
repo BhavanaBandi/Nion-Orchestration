@@ -2,7 +2,8 @@
 
 L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
 
-<img width="1909" height="930" alt="image" src="https://github.com/user-attachments/assets/8f3457d5-15b9-4707-80fd-4cc148def07b" />
+<img width="1874" height="849" alt="image" src="https://github.com/user-attachments/assets/2a4ed4e9-c84a-4b81-b54b-fa30a430c950" />
+
 
 
 ## 🔐 Authentication (Feature Branch)
@@ -20,7 +21,6 @@ For the `feature/rbac` branch, use the following logins (Password is `password12
 |----------|------|--------------|
 | `admin` | Project Manager | Full Access |
 | `engineer_bob` | Engineer | Technical Details |
-| `designer_sue` | Designer | Visual Focus |
 | `vp_alice` | VP Engineering | Strategic Summary |
 | `customer_dave`| Customer | Sanitized Summary Only |
 
