@@ -252,3 +252,38 @@ L3_EXTRACTION_USER_PROMPT = """Extract information from the following content:
 {content}
 
 Respond with valid JSON only."""
+
+TIMELINE_EXTRACTION_PROMPT = """You are a Timeline Extraction Agent.
+Your Goal: Extract EVERY time-related mention, deadline, or urgency signal from the text.
+
+Reference Date: {current_date}
+
+## Examples
+Input: "Finish by next Friday"
+Output: {{ "events": [ {{ "description": "Finish task", "date": {{ "raw": "next Friday", "normalized": "2024-XX-XX", "type": "relative", "certainty": "medium" }}, "is_deadline": true, "urgency_score": 5 }} ] }}
+
+Input: "ASAP! System down."
+Output: {{ "events": [ {{ "description": "System down fix", "date": {{ "raw": "ASAP", "normalized": "{current_date}", "type": "explicit", "certainty": "low" }}, "is_deadline": false, "urgency_score": 10 }} ] }}
+
+## Content to Analyze
+"{content}"
+
+## Output Schema
+Respond with VALID JSON only:
+{{
+  "events": [
+    {{
+      "event_id": "TE-001",
+      "description": "string (short event summary)",
+      "date": {{
+        "raw": "string (text from message)",
+        "normalized": "YYYY-MM-DD",
+        "type": "explicit | relative | period",
+        "certainty": "high | medium | low"
+      }},
+      "is_deadline": boolean,
+      "urgency_score": integer (1-10)
+    }}
+  ]
+}}
+"""
