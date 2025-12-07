@@ -28,6 +28,24 @@ class Token(BaseModel):
     token_type: str
 
 
+class User(BaseModel):
+    username: str
+    role: str = "viewer"
+
+
+# Mock Role Database
+USER_ROLES = {
+    "admin": "project_manager",
+    "engineer_bob": "engineer",
+    "designer_sue": "designer",
+    "customer_dave": "customer",
+    "vp_alice": "vp_engineering"
+}
+
+def get_user_role(username: str) -> str:
+    return USER_ROLES.get(username, "viewer")
+
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 

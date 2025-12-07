@@ -46,17 +46,21 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Depends, status
 import auth
 
+import rbac
+from auth import User, get_user_role
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = auth.verify_token(token)
-    if not user:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    username = auth.verify_token(token)
+    if not username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    role = get_user_role(username)
+    return User(username=username, role=role)
 
 
 # Request/Response Models
@@ -80,6 +84,11 @@ class OrchestrationResponse(BaseModel):
     task_count: int
     success: bool
     error: Optional[str] = None
+    # Flexible extra fields for sanitized views (e.g. summary)
+    extra: Optional[dict] = None
+
+    class Config:
+        extra = "allow" 
 
 
 @app.get("/")
@@ -95,29 +104,47 @@ async def root():
 @app.post("/token", response_model=auth.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user_ok = auth.verify_password(form_data.password, auth.ADMIN_PASSWORD_HASH)
-    if not user_ok or form_data.username != auth.ADMIN_USER:
-        raise HTTPException(
+    # Check against hardcoded admin OR allow any user in USER_ROLES for testing if password matches
+    # For MVP, let's stick to simple logic: 
+    # If username is in USER_ROLES, we allow login with the admin password for simplicity? 
+    # Or just allow 'admin' properly. 
+    # To test other roles, we need a way to login as them.
+    # Hack for MVP: IF username in USER_ROLES, we accept the password "password123" (which is what hash matches).
+    
+    # Verify password first (same password for everyone in MVP demo)
+    if not user_ok:
+         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Allow login if they are in our mock DB (or if they are the admin hardcoded var)
+    known_user = form_data.username == auth.ADMIN_USER or form_data.username in auth.USER_ROLES
+    if not known_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unknown user",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
     access_token = auth.create_access_token(data={"sub": form_data.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/orchestrate", response_model=OrchestrationResponse)
+@app.post("/orchestrate")  # Return dict for flexibility with RBAC
 async def orchestrate(
     request: OrchestrationRequest,
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Main orchestration endpoint.
-    Protected by JWT Authentication.
-    Processes a message through the L1→L2→L3 pipeline.
+    Protected by JWT Authentication + RBAC.
     """
     message_id = request.message_id or f"MSG-{int(datetime.now().timestamp())}"
     
-    logger.info(f"Processing orchestration request: {message_id}")
+    logger.info(f"Processing request {message_id} from {current_user.username} ({current_user.role})")
+
     
     try:
         # Build message dict
@@ -170,26 +197,30 @@ async def orchestrate(
         map_text = render_orchestration_map(task_plan, routing_results)
         storage.save_orchestration_map(message_id, map_text)
         
-        return OrchestrationResponse(
-            message_id=message_id,
-            timestamp=datetime.now().isoformat(),
-            orchestration_map=map_text,
-            task_count=len(task_plan.tasks),
-            success=True
-        )
+        raw_response = {
+            "message_id": message_id,
+            "timestamp": datetime.now().isoformat(),
+            "orchestration_map": map_text,
+            "task_count": len(task_plan.tasks),
+            "success": True
+        }
+        
+        # Apply RBAC Filter
+        return rbac.filter_response(raw_response, current_user.role)
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Orchestration error: {e}")
-        return OrchestrationResponse(
-            message_id=message_id,
-            timestamp=datetime.now().isoformat(),
-            orchestration_map="",
-            task_count=0,
-            success=False,
-            error=str(e)
-        )
+        error_response = {
+            "message_id": message_id,
+            "timestamp": datetime.now().isoformat(),
+            "orchestration_map": "",
+            "task_count": 0,
+            "success": False,
+            "error": str(e)
+        }
+        return rbac.filter_response(error_response, current_user.role)
 
 
 @app.get("/history")
