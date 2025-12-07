@@ -1,8 +1,7 @@
 # Nion Orchestration Engine
 
 L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
-
-<img width="1909" height="930" alt="image" src="https://github.com/user-attachments/assets/8f3457d5-15b9-4707-80fd-4cc148def07b" />
+<img width="1903" height="925" alt="image" src="https://github.com/user-attachments/assets/e748f0ee-0a1d-4d64-af0c-f73cf7607301" />
 
 
 ## 🔐 Authentication & RBAC
@@ -14,13 +13,10 @@ The system implements Role-Based Access Control (RBAC) with JWT authentication.
 **Test Credentials:**
 Password for ALL users is: `password123`
 
-
-
 | Username | Role | Dashboard View | Permissions |
 |----------|------|----------------|-------------|
 | `admin` | Project Manager | Full Orchestration Map | Full Access, Create Projects |
 | `engineer_bob` | Engineer | Action Items & Risks | View Technical Details, No Admin |
-| `designer_sue` | Designer | Visual Decisions | View Design Tasks Only |
 | `vp_alice` | VP Engineering | High-level Risks & Decisions | Strategic Overview |
 | `customer_dave`| Customer | Sanitized Summary | View Final Response Only |
 
@@ -30,6 +26,7 @@ Password for ALL users is: `password123`
 *   **Workspaces**: Organize orchestrations into distinct projects (e.g., "Alpha-Launch").
 *   **Context Switching**: Easily switch between projects to view relevant history.
 *   **Isolation**: New orchestrations are automatically tagged to the active project.
+
 
 ### 2. 📊 Role-Specific Dashboards
 Instead of a generic view for everyone, the dashboard adapts to the user's role:
