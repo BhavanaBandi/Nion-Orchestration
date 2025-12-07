@@ -14,7 +14,17 @@ This branch (`feature/authentication`) implements a secure login system.
 - **Username:** `admin`
 - **Password:** `password123`
 
-> **Note:** Credentials are managed via `backend/auth.py` and can be overridden with `.env` variables `ADMIN_USER` and `ADMIN_PASSWORD_HASH`.
+For the `feature/rbac` branch, use the following logins (Password is `password123` for ALL users):
+
+| Username | Role | Access Level |
+|----------|------|--------------|
+| `admin` | Project Manager | Full Access |
+| `engineer_bob` | Engineer | Technical Details |
+| `designer_sue` | Designer | Visual Focus |
+| `vp_alice` | VP Engineering | Strategic Summary |
+| `customer_dave`| Customer | Sanitized Summary Only |
+
+> **Note:** Credentials are managed via `backend/auth.py`.
 
 ## 🚀 Features
 
