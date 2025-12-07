@@ -4,105 +4,95 @@ L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
 <img width="1903" height="925" alt="image" src="https://github.com/user-attachments/assets/e748f0ee-0a1d-4d64-af0c-f73cf7607301" />
 
 
-## 🔐 Authentication (Feature Branch)
-This branch (`feature/authentication`) implements a secure login system.
+## 🔐 Authentication & RBAC
+
+The system implements Role-Based Access Control (RBAC) with JWT authentication.
 
 <img width="1919" height="931" alt="image" src="https://github.com/user-attachments/assets/a76b3038-1601-4537-9f70-e16fb4d09625" />
 
-**Default Credentials:**
-- **Username:** `admin`
-- **Password:** `password123`
+**Test Credentials:**
+Password for ALL users is: `password123`
 
-For the `feature/rbac` branch, use the following logins (Password is `password123` for ALL users):
+| Username | Role | Dashboard View | Permissions |
+|----------|------|----------------|-------------|
+| `admin` | Project Manager | Full Orchestration Map | Full Access, Create Projects |
+| `engineer_bob` | Engineer | Action Items & Risks | View Technical Details, No Admin |
+| `vp_alice` | VP Engineering | High-level Risks & Decisions | Strategic Overview |
+| `customer_dave`| Customer | Sanitized Summary | View Final Response Only |
 
-| Username | Role | Access Level |
-|----------|------|--------------|
-| `admin` | Project Manager | Full Access |
-| `engineer_bob` | Engineer | Technical Details |
-| `vp_alice` | VP Engineering | Strategic Summary |
-| `customer_dave`| Customer | Sanitized Summary Only |
+## 🚀 Key Features
 
-> **Note:** Credentials are managed via `backend/auth.py`.
+### 1. 📂 Project Sidebar (Slack-style)
+*   **Workspaces**: Organize orchestrations into distinct projects (e.g., "Alpha-Launch").
+*   **Context Switching**: Easily switch between projects to view relevant history.
+*   **Isolation**: New orchestrations are automatically tagged to the active project.
 
-## 🚀 Features
 
-- **L1 Strategic Planning**: Breaks down messages into task plans
-- **L2 Domain Routing**: Routes tasks to specialized L3 agents
-- **L3 Extraction Agents**: Action items, risks, decisions, Q&A, evaluation
-- **React Dashboard**: Modern dark-mode UI for message processing
-- **SQLite Storage**: Persistent orchestration history
+### 2. 📊 Role-Specific Dashboards
+Instead of a generic view for everyone, the dashboard adapts to the user's role:
+*   **Engineers**: See a list of action items, deadlines, and detected risks.
+*   **VPs/Managers**: See high-level strategic decisions and critical risks.
+*   **Customers**: See a polite, sanitized summary and final response — no internal logs.
+
+### 3. 🧠 Mini Timeline Engine
+*   **Date Normalization**: Converts relative dates ("next Friday") to absolute timestamps.
+*   **Conflict Detection**: Identifies scheduling conflicts in message content.
+*   **Extraction**: Automatically extracts deadlines for action items.
+
+### 4. ⚡ L1-L3 Orchestration
+*   **L1 Strategic Planner**: Breaks down complex requests into a dependency graph.
+*   **L2 Router**: Dispatches tasks to specialized domains.
+*   **L3 Agents**: specialized processing for Risks, Actions, Decisions, and more.
+
+### 5. 🤖 RAG Project Assistant (Beta)
+*   **Contextual Q&A**: Ask questions about the project and get answers based on documentation.
+*   **Status**: 🚧 **Under Construction**. The chatbot handles basic queries but improvements to context retrieval and answer generation are ongoing.
+*   **Tech**: FAISS Vector Store + Sentence Transformers + Groq LLaMA 3.
 
 ## 📁 Project Structure
 
 ```
 Nion-Orchestration/
-├── backend/           # Python FastAPI backend
-│   ├── api.py         # FastAPI server
-│   ├── main.py        # CLI interface
-│   ├── config.py      # Configuration
-│   ├── prompts.py     # LLM prompts
-│   ├── llm/           # Groq client
-│   ├── models/        # Pydantic models
-│   ├── orchestration/ # L1, L2, L3 orchestrators
-│   ├── rendering/     # Map renderer
-│   ├── storage/       # SQLite storage
-│   ├── samples/       # Test message samples
-│   └── tests/         # Pytest tests
-├── frontend/          # React Vite frontend
-│   ├── src/           # React components
-│   └── package.json   # Dependencies
+├── backend/
+│   ├── api.py           # FastAPI endpoints (Auth, Projects, Orchestrate)
+│   ├── auth.py          # JWT & Password hashing
+│   ├── rbac.py          # Role definitions & filtering logic
+│   ├── orchestration/   # L1, L2, L3 & Timeline Engine
+│   └── storage/         # SQLite DB (projects, maps, tasks)
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx      # Main Logic & Dashboard Rendering
+│   │   ├── Sidebar.jsx  # Project Management UI
+│   │   └── Login.jsx    # Auth UI
+│   └── package.json
 └── README.md
 ```
 
-## 🛠️ Setup
+## 🛠️ Setup & Usage
 
-### Backend
-
+### 1. Backend
 ```bash
 cd backend
 pip install -r requirements.txt
-
-# Set your Groq API key
-export GROQ_API_KEY="your_api_key_here"  # Linux/Mac
-$env:GROQ_API_KEY="your_api_key_here"    # Windows PowerShell
-
-# Run API server
+# Set GROQ_API_KEY
 python api.py
 ```
 
-### Frontend
-
+### 2. Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## 🔧 Usage
-
-1. Start the backend API: `cd backend && python api.py`
-2. Start the frontend: `cd frontend && npm run dev`
-3. Open http://localhost:5173
-4. Enter a message or load a sample
-5. Click "Process Message" to generate orchestration map
+### 3. Using the App
+1.  **Login**: Use one of the credentials above (e.g., `admin` / `password123`).
+2.  **Create Project**: Use the Sidebar to create a workspace (e.g., "Demo-Project").
+3.  **Process Message**: Enter a request. The system will orchestrate it within the context of your project.
+4.  **Explore Views**: Log out and log in as `engineer_bob` or `customer_dave` to see how the dashboard changes!
 
 ## 📋 Test Cases
-
-The project includes 7 test cases from `testio.md`:
-- MSG-001: Feature request with scope change
-- MSG-101: Simple status question
-- MSG-102: Feasibility question
-- MSG-103: Priority decision
-- MSG-104: Meeting transcript (multi-issue)
-- MSG-105: Urgent escalation
-- MSG-106: Ambiguous request
-
-## 🔑 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GROQ_API_KEY` | Groq API key for LLaMA 3 70B | Yes |
+The system is verified against 7 core scenarios (`testio.md`) covering feature requests, status checks, and ambiguity resolution.
 
 ## 📄 License
-
 MIT
