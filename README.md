@@ -1,20 +1,20 @@
 # Nion Orchestration Engine
 
-L1 → L2 → L3 Task Orchestration Engine powered by Groq LLaMA 3 70B.
+L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
 
-![Nion Dashboard](https://via.placeholder.com/800x400?text=Nion+Orchestration+Dashboard)
+<img width="1909" height="930" alt="image" src="https://github.com/user-attachments/assets/8f3457d5-15b9-4707-80fd-4cc148def07b" />
 
-## 🌐 Live Demo & MVP
-Check out the live MVP deployed on Vercel:
-**[https://nion-orchestration.vercel.app](https://nion-orchestration.vercel.app)**
-*(Note: The live version is the main branch without authentication)*
 
 ## 🔐 Authentication & RBAC
 
 The system implements Role-Based Access Control (RBAC) with JWT authentication.
 
+<img width="1919" height="931" alt="image" src="https://github.com/user-attachments/assets/a76b3038-1601-4537-9f70-e16fb4d09625" />
+
 **Test Credentials:**
 Password for ALL users is: `password123`
+
+
 
 | Username | Role | Dashboard View | Permissions |
 |----------|------|----------------|-------------|
