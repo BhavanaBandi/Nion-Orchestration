@@ -4,6 +4,20 @@ L1 → L2 → L3 Task Orchestration Engine powered by Groq LLaMA 3 70B.
 
 ![Nion Dashboard](https://via.placeholder.com/800x400?text=Nion+Orchestration+Dashboard)
 
+## 🌐 Live Demo & MVP
+Check out the live MVP deployed on Vercel:
+**[https://nion-orchestration.vercel.app](https://nion-orchestration.vercel.app)**
+*(Note: The live version is the main branch without authentication)*
+
+## 🔐 Authentication (Feature Branch)
+This branch (`feature/authentication`) implements a secure login system.
+
+**Default Credentials:**
+- **Username:** `admin`
+- **Password:** `password123`
+
+> **Note:** Credentials are managed via `backend/auth.py` and can be overridden with `.env` variables `ADMIN_USER` and `ADMIN_PASSWORD_HASH`.
+
 ## 🚀 Features
 
 - **L1 Strategic Planning**: Breaks down messages into task plans
