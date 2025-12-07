@@ -85,24 +85,78 @@ class Storage:
                 CREATE INDEX IF NOT EXISTS idx_tasks_message_id 
                 ON tasks(message_id)
             """)
+            # Projects table (New for Sidebar)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_extractions_task_id 
-                ON extractions(task_id)
+                CREATE TABLE IF NOT EXISTS projects (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_name TEXT UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
             """)
             
+            # Check if project_id exists in orchestration_maps (Migration)
+            try:
+                cursor.execute("SELECT project_id FROM orchestration_maps LIMIT 1")
+            except sqlite3.OperationalError:
+                # Column doesn't exist, add it
+                logger.info("Migrating schema: Adding project_id to orchestration_maps")
+                cursor.execute("ALTER TABLE orchestration_maps ADD COLUMN project_id INTEGER REFERENCES projects(id)")
+
             logger.debug("Database schema initialized")
     
+    # --- Project Methods ---
+    
+    def create_project(self, project_name: str) -> int:
+        """Create a new project"""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    "INSERT INTO projects (project_name) VALUES (?)",
+                    (project_name,)
+                )
+                return cursor.lastrowid
+            except sqlite3.IntegrityError:
+                # Used named already exists, return its ID
+                cursor.execute("SELECT id FROM projects WHERE project_name = ?", (project_name,))
+                return cursor.fetchone()[0]
+
+    def list_projects(self) -> List[Dict]:
+        """List all projects"""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM projects ORDER BY created_at DESC")
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_project_history(self, project_id: int) -> List[Dict]:
+        """Get orchestration history for a project"""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, message_id, created_at, 'completed' as status 
+                FROM orchestration_maps 
+                WHERE project_id = ? 
+                ORDER BY created_at DESC
+                """,
+                (project_id,)
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    # --- Orchestration Methods ---
+
     def save_orchestration_map(
         self,
         message_id: str,
-        map_text: str
+        map_text: str,
+        project_id: Optional[int] = None
     ) -> int:
         """Save an orchestration map and return its ID"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO orchestration_maps (message_id, map_text) VALUES (?, ?)",
-                (message_id, map_text)
+                "INSERT INTO orchestration_maps (message_id, map_text, project_id) VALUES (?, ?, ?)",
+                (message_id, map_text, project_id)
             )
             return cursor.lastrowid
     

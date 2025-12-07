@@ -9,6 +9,7 @@ from typing import Optional
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException
+from rag.api import router as rag_router
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -40,6 +41,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(rag_router, prefix="/rag")
 
 # Authentication logic
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -132,6 +134,46 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+# --- Project Endpoints ---
+
+class ProjectCreate(BaseModel):
+    name: str
+
+@app.get("/projects")
+async def list_projects(current_user: User = Depends(get_current_user)):
+    """List all projects"""
+    # Filter for customer if needed, but for MVP let's show all for internal users
+    if current_user.role == "customer":
+        # MVP: Customers might only see projects they are assigned to, or none.
+        # For now, return all (or filtered). Let's return all for "demo" visibility.
+        pass 
+    
+    return storage.list_projects()
+
+@app.post("/projects")
+async def create_project(
+    project: ProjectCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new project"""
+    # Only Admin/PM/Engineer should create projects?
+    if current_user.role == "customer":
+        raise HTTPException(status_code=403, detail="Not authorized to create projects")
+        
+    project_id = storage.create_project(project.name)
+    return {"id": project_id, "name": project.name, "success": True}
+
+@app.get("/projects/{project_id}/history")
+async def get_project_history(
+    project_id: int, 
+    current_user: User = Depends(get_current_user)
+):
+    """Get orchestration history for a specific project"""
+    return storage.get_project_history(project_id)
+
+
+# --- Orchestration ---
+
 @app.post("/orchestrate")  # Return dict for flexibility with RBAC
 async def orchestrate(
     request: OrchestrationRequest,
@@ -143,10 +185,25 @@ async def orchestrate(
     """
     message_id = request.message_id or f"MSG-{int(datetime.now().timestamp())}"
     
-    logger.info(f"Processing request {message_id} from {current_user.username} ({current_user.role})")
+    logger.info(f"Processing request {message_id} from {current_user.username} (Role: {current_user.role}, Project: {request.project})")
 
-    
     try:
+        # Resolve Project ID if provided as name or ID
+        project_id = None
+        if request.project:
+            # Try to lookup project ID from name if string is passed
+            # For MVP, let's assumes the frontend sends the project ID in request.project if it's an ID, or we handle string names?
+            # The storage `create_project` returns an ID. The frontend calls `orchestrate` with `project`.
+            # If `request.project` is a string like "PRJ-ALPHA", we might want to get its ID or create it?
+            # Actually, per design, the sidebar sends the selected `project_id`.
+            # Let's try to interpret request.project as ID first.
+            try:
+                project_id = int(request.project)
+            except ValueError:
+                # It's a name, maybe legacy or user typed it in.
+                # Let's create-or-get.
+                project_id = storage.create_project(request.project)
+        
         # Build message dict
         message_dict = {
             "message_id": message_id,
@@ -195,7 +252,9 @@ async def orchestrate(
         
         # Render map
         map_text = render_orchestration_map(task_plan, routing_results)
-        storage.save_orchestration_map(message_id, map_text)
+        
+        # Save with Project ID
+        storage.save_orchestration_map(message_id, map_text, project_id=project_id)
         
         # Aggregate Structured Data
         action_items = []
