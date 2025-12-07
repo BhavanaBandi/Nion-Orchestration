@@ -5,13 +5,10 @@ L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
 <img width="1909" height="930" alt="image" src="https://github.com/user-attachments/assets/8f3457d5-15b9-4707-80fd-4cc148def07b" />
 
 
-## 🌐 Live Demo & MVP
-Check out the live MVP deployed on Vercel:
-**[https://nion-orchestration.vercel.app](https://nion-orchestration.vercel.app)**
-*(Note: The live version is the main branch without authentication)*
-
 ## 🔐 Authentication (Feature Branch)
 This branch (`feature/authentication`) implements a secure login system.
+
+<img width="1919" height="931" alt="image" src="https://github.com/user-attachments/assets/a76b3038-1601-4537-9f70-e16fb4d09625" />
 
 **Default Credentials:**
 - **Username:** `admin`
