@@ -1,8 +1,9 @@
 # Nion Orchestration Engine
 
-L1 → L2 → L3 Task Orchestration Engine powered by Groq LLaMA 3 70B.
+L1 → L2 → L3 Task Orchestration Engine powered by OpenAI/GPT-OSS-120.
 
-![Nion Dashboard](https://via.placeholder.com/800x400?text=Nion+Orchestration+Dashboard)
+<img width="1909" height="930" alt="image" src="https://github.com/user-attachments/assets/8f3457d5-15b9-4707-80fd-4cc148def07b" />
+
 
 ## 🚀 Features
 
