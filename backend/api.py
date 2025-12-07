@@ -197,12 +197,36 @@ async def orchestrate(
         map_text = render_orchestration_map(task_plan, routing_results)
         storage.save_orchestration_map(message_id, map_text)
         
+        # Aggregate Structured Data
+        action_items = []
+        risks = []
+        decisions = []
+        
+        for result in routing_results:
+            if result.success and result.extraction_result:
+                data = result.extraction_result.model_dump(mode='json')
+                
+                # Check for "items" list which is common pattern in our extraction models
+                if "items" in data:
+                    items = data["items"]
+                    if result.l3_agent == "action_item_extraction":
+                        action_items.extend(items)
+                    elif result.l3_agent == "risk_extraction":
+                        risks.extend(items)
+                    elif result.l3_agent == "decision_extraction":
+                        decisions.extend(items)
+                        
         raw_response = {
             "message_id": message_id,
             "timestamp": datetime.now().isoformat(),
             "orchestration_map": map_text,
             "task_count": len(task_plan.tasks),
-            "success": True
+            "success": True,
+            "extra": {
+                "action_items": action_items,
+                "risks": risks,
+                "decisions": decisions
+            }
         }
         
         # Apply RBAC Filter

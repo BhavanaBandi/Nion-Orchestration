@@ -60,14 +60,38 @@ def filter_response(data: Dict[str, Any], role: str) -> Dict[str, Any]:
         return generate_customer_summary(data)
     
     # 2. General Filtering for internal roles
-    # If they can't view the map, redact it
+    
+    # Redact Orchestration Map if no permission
+    # NOTE: Even Engineers might want to see the map, but user asked for "design without full map".
+    # We will provide the map ONLY if they have permission, but Frontend can choose to hide it.
+    # However, to STRICTLY follow "design without full map" request for specific views:
+    # We will redact it for everyone except PM and Engineer (Engineer needs it for deep debug, but we'll show Dashboard primarily).
     if not has_permission(role, "view_orchestration_map"):
         filtered["orchestration_map"] = "[REDACTED: Insufficient Permissions]"
         
-    # Note: currently our OrchestrationResponse is flat. 
-    # If it had nested "l1_tasks" etc, we would filter those keys here.
-    # For MVP, the main "internal details" act is the orchestration map text itself.
-    
+    # Filter "extra" structured data
+    if "extra" in filtered and filtered["extra"]:
+        extra = filtered["extra"]
+        new_extra = {}
+        
+        # Risks
+        if has_permission(role, "view_risks"):
+            new_extra["risks"] = extra.get("risks", [])
+            
+        # Decisions
+        if has_permission(role, "view_decisions"):
+            new_extra["decisions"] = extra.get("decisions", [])
+            
+        # Action Items (mapped to internal tasks permission for now, or new one)
+        # Let's use 'view_internal_l3_outputs' or just assume if they can see map, they can see AIs.
+        # Adding explicit check:
+        if has_permission(role, "view_internal_l3_outputs") or has_permission(role, "view_risks"): 
+             # Rough heuristic: if they can see risks, they likely need AIs too. 
+             # Better: Add 'view_action_items' to PERMISSIONS.
+             new_extra["action_items"] = extra.get("action_items", [])
+             
+        filtered["extra"] = new_extra
+
     return filtered
 
 def generate_customer_summary(data: Dict[str, Any]) -> Dict[str, Any]:

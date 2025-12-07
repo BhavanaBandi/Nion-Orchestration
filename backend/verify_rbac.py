@@ -47,6 +47,15 @@ async def test_orchestration(username, role_name):
              print(colored("  [+] Can see Orchestration Map", "green"))
         elif "orchestration_map" in data and "REDACTED" in data["orchestration_map"]:
              print(colored("  [-] Orchestration Map is REDACTED", "yellow"))
+             
+             # Check for Structured Dashboard Data
+             if "extra" in data and data["extra"]:
+                 print(colored(f"  [+] Received Structured Dashboard Data (Keys: {list(data['extra'].keys())})", "cyan"))
+                 if "risks" in data["extra"]:
+                     print(f"    - Risks: {len(data['extra']['risks'])}")
+                 if "action_items" in data["extra"]:
+                     print(f"    - Action Items: {len(data['extra']['action_items'])}")
+        
         elif "customer_view" in data:
              print(colored("  [!] Received CUSTOMER SUMMARY (Sanitized)", "blue"))
              print(f"  Summary: {data.get('summary')}")
@@ -61,7 +70,7 @@ async def main():
     await test_orchestration("customer_dave", "customer")
     
     # 3. Test Engineer (Engineer)
-    # await test_orchestration("engineer_bob", "engineer")
+    await test_orchestration("engineer_bob", "engineer")
 
 if __name__ == "__main__":
     try:
