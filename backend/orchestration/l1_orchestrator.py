@@ -62,9 +62,30 @@ class L1Orchestrator:
             L1OrchestratorResult containing the task plan
         """
         logger.info(f"L1 Orchestrator: Planning tasks for message {message.message_id}")
+
+        # [NEW] Timeline Analysis
+        try:
+            from orchestration.timeline_engine import TimelineEngine
+            timeline_engine = TimelineEngine(client=self.client)
+            timeline_result = await timeline_engine.analyze(message.content)
+            
+            # Format timeline context for L1 Prompt
+            timeline_context = json.dumps(timeline_result.model_dump(mode='json'), indent=2)
+            logger.info(f"L1 Timeline Analysis: {len(timeline_result.events)} events found")
+            
+            # If conflicts/recommendations exist, inject them
+            if timeline_result.conflicts or timeline_result.recommendations:
+                logger.warning(f"L1 Timeline Conflicts: {len(timeline_result.conflicts)}")
+        except Exception as e:
+            logger.error(f"L1 Timeline Engine failed: {e}")
+            timeline_context = "Timeline analysis failed."
+
         
         system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(message)
+        
+        # Inject timeline insights into prompt
+        user_prompt += f"\n\n## Timeline Analysis (Auto-Generated)\n{timeline_context}\n\nUse this timeline data to generate task deadlines and identify clarification needs."
         
         try:
             # Call Groq LLM
